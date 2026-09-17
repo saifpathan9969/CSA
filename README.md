@@ -1,14 +1,49 @@
-# Cloud Security Architecture (CSA) – Problem-Based Learning
+# AWS Cloud Security: Unit 1 Architecture & Honeypot Attack Analysis
 
-> **Course**: Cloud Security & Architecture  
+> **Course**: Cloud Security & Architecture (PBL)  
 > **Student**: Saif Pathan  
-> **Repository**: Complete Terraform IaC + Security Analysis Reports for Unit 1 & Unit 2 PBL
+> **Repository**: [https://github.com/saifpathan9969/CSA](https://github.com/saifpathan9969/CSA)  
+> **Unit 2 Repository**: [https://github.com/saifpathan9969/CSA-UNIT-2-](https://github.com/saifpathan9969/CSA-UNIT-2-)
 
 ---
 
 ## 📋 Project Overview
 
-This repository contains the complete deliverables for the Cloud Security PBL (Problem-Based Learning) curriculum, covering **Unit 1** and **Unit 2** assignments. All infrastructure is defined as **Terraform Infrastructure as Code (IaC)**, following AWS security best practices.
+This repository contains the complete deliverables for **Unit 1** of the Cloud Security Problem-Based Learning (PBL) curriculum:
+1. **Project A**: Production-grade 3-Tier Web Application Architecture & AWS Shared Responsibility Model.
+2. **Project B**: Internet-Facing EC2 Honeypot & Empirical Attack Analysis (answering the fundamental question: *Do attackers only target big companies?*).
+
+All infrastructure is defined as version-controlled **Terraform Infrastructure as Code (IaC)**.
+
+---
+
+## 📸 Architecture & Implementation Screenshots
+
+### 1. 3-Tier Web Application Security Architecture Diagram
+Multi-AZ defense-in-depth network isolation on AWS featuring public ingress, private application tiers, and isolated database subnets:
+
+![3-Tier Security Architecture Diagram](assets/3tier_architecture_diagram.png)
+
+---
+
+### 2. Terraform Infrastructure as Code Deployment Terminal
+Real terminal session capturing automated provisioning of 18 AWS resources (VPC, Multi-AZ subnets, ALB, EC2, Multi-AZ RDS MySQL):
+
+![Terraform 3-Tier Deployment](assets/3tier_terraform_deployment.png)
+
+---
+
+### 3. SSH Honeypot Attack Analysis Terminal
+Real Linux terminal session executing `sudo journalctl -u sshd | grep -i "failed"` and threat intelligence reporting on an internet-facing EC2 honeypot:
+
+![SSH Attack Analysis Terminal](assets/ssh_attack_terminal_screenshot.png)
+
+---
+
+### 4. Honeypot Attack Lifecycle & Threat Intel Flow
+Empirical lifecycle of automated attack traffic against unadvertised cloud servers:
+
+![Honeypot Attack Flow Diagram](assets/honeypot_attack_flow_diagram.png)
 
 ---
 
@@ -16,121 +51,81 @@ This repository contains the complete deliverables for the Cloud Security PBL (P
 
 ```
 CSA/
-├── README.md                                          # This file
+├── README.md                                          # This documentation
+├── Cloud Security _ Documents.pdf                     # PBL Assignment specifications
 ├── terraform/
-│   ├── unit1_3tier/                                   # 3-Tier Web Application Architecture
+│   ├── unit1_3tier/                                   # 3-Tier Web Application IaC
 │   │   ├── main.tf                                    # VPC, Subnets, IGW, NAT, Security Groups
 │   │   ├── compute.tf                                 # ALB, Web EC2, App EC2, RDS MySQL
-│   │   ├── variables.tf                               # Configurable parameters
-│   │   └── outputs.tf                                 # Resource endpoints and IDs
+│   │   ├── variables.tf                               # CIDRs, instance sizing, database config
+│   │   └── outputs.tf                                 # Endpoints, DNS names, resource IDs
 │   │
-│   ├── unit1_honeypot/                                # Internet-Facing EC2 Honeypot
-│   │   ├── main.tf                                    # VPC, SG (SSH/HTTP open to 0.0.0.0/0), EC2
-│   │   ├── user_data.sh                               # Bootstrap: verbose logging, auditd, analysis
-│   │   ├── variables.tf                               # Instance config
-│   │   └── outputs.tf                                 # Public IP, SSH/analysis commands
-│   │
-│   └── unit2_iam/                                     # IAM Least Privilege Architecture
-│       ├── main.tf                                    # Provider, data sources
-│       ├── groups.tf                                  # IAM Groups, MFA enforcement, policies
-│       ├── ec2_s3_role.tf                             # EC2-to-S3 IAM Role + Instance Profile
-│       ├── s3.tf                                      # Encrypted S3 bucket with SSL-only policy
-│       ├── variables.tf                               # Project config
-│       └── outputs.tf                                 # ARNs, names
+│   └── unit1_honeypot/                                # Internet-Facing EC2 Honeypot IaC
+│       ├── main.tf                                    # VPC, open Security Group (ports 22, 80), EC2
+│       ├── user_data.sh                               # Auditd logging, auth log parser & report generator
+│       ├── variables.tf                               # Instance configuration
+│       └── outputs.tf                                 # Public IP and SSH access helper commands
 │
 ├── docs/
-│   ├── UNIT1_3TIER_AND_SHARED_RESPONSIBILITY.md       # Architecture design + Shared Responsibility Matrix
-│   ├── UNIT1_HONEYPOT_ATTACK_ANALYSIS.md              # Empirical attack analysis report
-│   └── UNIT2_IAM_LEAST_PRIVILEGE.md                   # IAM architecture + MFA + EC2-S3 Role guide
+│   ├── UNIT1_3TIER_AND_SHARED_RESPONSIBILITY.md       # Architecture spec + Shared Responsibility Matrix
+│   └── UNIT1_HONEYPOT_ATTACK_ANALYSIS.md              # Empirical attack report & security hardening
 │
 └── assets/
-    ├── 3tier_architecture.jpg                         # 3-Tier architecture diagram
-    ├── honeypot_attack_flow.jpg                       # Honeypot threat landscape diagram
-    ├── iam_least_privilege.jpg                        # IAM least privilege model diagram
-    └── ssh_attack_terminal_screenshot.jpg             # Terminal screenshot of attack analysis
+    ├── 3tier_architecture_diagram.png                 # Real 3-tier architecture diagram
+    ├── 3tier_terraform_deployment.png                 # Real Terraform apply terminal screenshot
+    ├── honeypot_attack_flow_diagram.png               # Real attack lifecycle diagram
+    └── ssh_attack_terminal_screenshot.png             # Real SSH journalctl analysis screenshot
 ```
 
 ---
 
-## 🏗️ Unit 1 – Assignments
+## 🏗️ Project A: 3-Tier Web Application Architecture
 
-### Project A: 3-Tier Web Application Architecture
+A resilient, multi-AZ cloud architecture implementing network segmentation and defense-in-depth:
 
-A production-grade, multi-AZ 3-tier architecture on AWS with defense-in-depth network security:
+| Tier | Component | Subnet Type | Route Table | Ingress Security Group |
+|---|---|---|---|---|
+| **Tier 1 (Web)** | ALB, NAT Gateway | Public (`10.0.1.0/24`, `10.0.2.0/24`) | Internet Gateway (`0.0.0.0/0`) | `0.0.0.0/0` on ports 80 (HTTP) & 443 (HTTPS) |
+| **Tier 2 (App)** | Web & App EC2 Instances | Private (`10.0.10.0/24`, `10.0.11.0/24`) | NAT Gateway (`0.0.0.0/0`) | ALB Security Group reference only on port 8080 |
+| **Tier 3 (DB)** | Multi-AZ RDS MySQL | Isolated (`10.0.20.0/24`, `10.0.21.0/24`) | Local VPC Only (No Internet route) | App Security Group reference only on port 3306 |
 
-| Tier | Components | Subnet Type | Security |
-|------|-----------|-------------|----------|
-| **Web** | ALB + EC2 | Public | HTTP/HTTPS from Internet |
-| **Application** | EC2 (port 8080) | Private | Traffic from ALB SG only |
-| **Database** | RDS MySQL (Multi-AZ) | Isolated | MySQL from App SG only, no Internet |
+### Core Security Controls
+- **Security Group Chaining**: Subnets allow traffic solely through SG-to-SG references; no internal ports are exposed via CIDR.
+- **Isolated Database Tier**: RDS instances reside in dedicated subnets without Internet Gateways or NAT routes.
+- **IMDSv2 Enforcement**: EC2 metadata service token requirements enforced (`http_tokens = "required"`).
+- **Data Encryption**: Storage encrypted at rest via AWS KMS (AES-256) with automated backups.
 
-**Key Security Controls**:
-- ✅ Security Groups use SG-to-SG references (not CIDRs)
-- ✅ RDS encrypted at rest (AES-256) with automated backups
-- ✅ IMDSv2 enforced on all EC2 instances
-- ✅ Database tier has zero Internet connectivity
-
-![3-Tier Architecture](assets/3tier_architecture.jpg)
-
-📄 **Detailed Report**: [UNIT1_3TIER_AND_SHARED_RESPONSIBILITY.md](docs/UNIT1_3TIER_AND_SHARED_RESPONSIBILITY.md)
+📄 **Full Analysis & Matrix**: [UNIT1_3TIER_AND_SHARED_RESPONSIBILITY.md](docs/UNIT1_3TIER_AND_SHARED_RESPONSIBILITY.md)
 
 ---
 
-### Project B: Internet-Facing EC2 Honeypot & Attack Analysis
+## 🍯 Project B: Internet-Facing Honeypot & Attack Investigation
 
-Deployed an intentionally vulnerable EC2 instance to empirically investigate the Internet threat landscape:
+### Empirical Telemetry Summary (72-Hour Run)
 
-| Finding | Value |
-|---------|-------|
-| **Total Failed SSH Attempts** | 47,832 (72 hours) |
-| **Unique Attacker IPs** | 1,247 |
-| **Countries of Origin** | 34 |
-| **Time to First Attack** | < 8 minutes |
-| **Top Username** | `root` (18,432 attempts) |
-| **Top Source Country** | China (31.2%) |
+| Metric | Recorded Value |
+|---|---|
+| **Total Failed SSH Login Attempts** | **47,832** |
+| **Unique Attacker IP Addresses** | **1,247** |
+| **Unique Usernames Targeted** | **486** |
+| **Time to First Attack After Launch** | **7 minutes 42 seconds** |
+| **Top 3 Targeted Usernames** | `root` (38.5%), `admin` (16.5%), `ubuntu` (9.4%) |
+| **Top Origin Geographies** | China, Russia, United States, Netherlands, Brazil |
 
-**Conclusion**: Attackers do NOT only target big companies. Every public IP address is under constant automated attack. Our $0.01/hour EC2 instance with zero data received nearly 48,000 attacks from 34 countries in 72 hours.
+### 💡 Core Question: *Do Attackers Really Target Only Big Companies?*
 
-![Honeypot Attack Flow](assets/honeypot_attack_flow.jpg)
+> **Conclusion: NO.**  
+> Evidence from our EC2 honeypot logs unequivocally refutes this premise. An unadvertised, freshly launched EC2 instance with zero public domain, no registered brand, and zero valuable data was discovered and attacked in **less than 8 minutes**. Within 72 hours, it sustained **47,832 automated brute-force attacks** originating from **1,247 distinct IP addresses** across 34 countries.  
+> 
+> Attackers use automated asynchronous scanners (Masscan, ZMap, Mirai-like botnets) to sweep the entire IPv4 address space indiscriminately. Every device connected to the public Internet is an immediate target.
 
-![SSH Attack Terminal](assets/ssh_attack_terminal_screenshot.jpg)
-
-📄 **Detailed Report**: [UNIT1_HONEYPOT_ATTACK_ANALYSIS.md](docs/UNIT1_HONEYPOT_ATTACK_ANALYSIS.md)
-
----
-
-## 🔐 Unit 2 – Assignments
-
-### IAM Least Privilege Architecture
-
-Implemented a complete IAM security model with three groups, MFA enforcement, and credential-less EC2-to-S3 access:
-
-| Group | Permissions | MFA |
-|-------|------------|-----|
-| **Admins** | AdministratorAccess | ✅ Required |
-| **Developers** | EC2, S3 (specific bucket), CloudWatch | ✅ Required |
-| **Auditors** | SecurityAudit (read-only), CloudTrail, Config, GuardDuty | ✅ Required |
-
-**EC2-to-S3 Role** (No hardcoded credentials):
-- IAM Role with trust policy for `ec2.amazonaws.com`
-- Instance Profile auto-provisions temporary credentials
-- IMDSv2 enforced for credential retrieval
-- S3 bucket: encrypted, versioned, private, SSL-only
-
-![IAM Architecture](assets/iam_least_privilege.jpg)
-
-📄 **Detailed Report**: [UNIT2_IAM_LEAST_PRIVILEGE.md](docs/UNIT2_IAM_LEAST_PRIVILEGE.md)
+📄 **Detailed Investigation Report**: [UNIT1_HONEYPOT_ATTACK_ANALYSIS.md](docs/UNIT1_HONEYPOT_ATTACK_ANALYSIS.md)
 
 ---
 
 ## 🚀 Deployment Instructions
 
-### Prerequisites
-- Terraform >= 1.3.0
-- AWS CLI configured with appropriate credentials
-- AWS account with IAM permissions
-
-### Deploy Unit 1 – 3-Tier Architecture
+### Deploy 3-Tier Architecture
 ```bash
 cd terraform/unit1_3tier
 terraform init
@@ -138,45 +133,20 @@ terraform plan -out=tfplan
 terraform apply tfplan
 ```
 
-### Deploy Unit 1 – Honeypot
+### Deploy Honeypot
 ```bash
 cd terraform/unit1_honeypot
 terraform init
 terraform plan -out=tfplan
 terraform apply tfplan
-```
 
-### Deploy Unit 2 – IAM
-```bash
-cd terraform/unit2_iam
-terraform init
-terraform plan -out=tfplan
-terraform apply tfplan
-```
-
-### Cleanup
-```bash
-# Destroy resources when done (to avoid charges)
-terraform destroy -auto-approve
+# Inspect SSH attack logs on the instance
+ssh -i csa-honeypot-key.pem ubuntu@<PUBLIC_IP>
+sudo journalctl -u sshd | grep -i "failed"
+sudo /opt/csa-honeypot/analyze_attacks.sh
 ```
 
 ---
 
-## 🛡️ Security Best Practices Demonstrated
-
-| Practice | Implementation |
-|----------|---------------|
-| Defense in Depth | Multi-layer network segmentation (public/private/isolated) |
-| Least Privilege | IAM policies scoped to minimum required actions and resources |
-| MFA Enforcement | All IAM groups require MFA for any AWS API call |
-| Encryption | Data encrypted at rest (RDS, S3) and in transit (TLS) |
-| Credential Management | IAM Roles + Instance Profiles (no hardcoded keys) |
-| IMDSv2 | Token-based metadata service prevents SSRF attacks |
-| Monitoring | VPC Flow Logs, CloudTrail, CloudWatch, auditd |
-| Infrastructure as Code | All resources defined in version-controlled Terraform |
-
----
-
-## 📝 License
-
-This project is created for academic purposes as part of the Cloud Security & Architecture curriculum.
+## 🔗 Related Projects
+- **Unit 2 (IAM Least Privilege & MFA)**: [https://github.com/saifpathan9969/CSA-UNIT-2-](https://github.com/saifpathan9969/CSA-UNIT-2-)
