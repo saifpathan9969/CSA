@@ -25,3 +25,7 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# Local Unit 2 report copy
+UNIT2_PROJECT_REPORT.*
+
