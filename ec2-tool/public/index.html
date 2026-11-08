@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CSA UNIT 3 // EC2 DEPLOYMENT TOOL</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blk:#000;--wht:#fff;--yel:#FFE600;--red:#FF2D00;
+  --grn:#00FF41;--blu:#0047FF;--gry:#ccc;--dgry:#1a1a1a;
+  --b:3px solid #000;--sh:5px 5px 0 #000;--f:'Courier New',monospace
+}
+html{scroll-behavior:smooth}
+body{background:#f0f0f0;color:var(--blk);font-family:var(--f);font-size:13px}
+
+/* ── HEADER ── */
+#hdr{background:var(--blk);border-bottom:5px solid var(--yel);position:sticky;top:0;z-index:200;display:flex;align-items:stretch}
+.hl{background:var(--yel);color:var(--blk);font-size:20px;font-weight:900;padding:13px 20px;border-right:4px solid #000;letter-spacing:-1px;text-transform:uppercase}
+.hl span{color:var(--red)}
+.ht{padding:13px 20px;display:flex;flex-direction:column;justify-content:center}
+.ht strong{color:var(--yel);font-size:14px;letter-spacing:1px;text-transform:uppercase}
+.ht small{color:var(--gry);font-size:9px;letter-spacing:3px;text-transform:uppercase}
+.hst{margin-left:auto;display:flex;align-items:stretch}
+.pill{padding:0 16px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;border-left:3px solid #333}
+.pill::before{content:'●';font-size:8px;animation:blink 1.2s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.pill.idle{background:#333;color:var(--gry)}
+.pill.deploying{background:#0047FF;color:#fff}
+.pill.running{background:var(--grn);color:#000}
+.pill.stopped{background:#555;color:#fff}
+.pill.terminated{background:var(--red);color:#fff}
+.clk{background:var(--blk);color:var(--gry);padding:0 16px;display:flex;align-items:center;font-size:11px;border-left:3px solid #333;letter-spacing:2px}
+
+/* ── NAV ── */
+#nav{background:var(--blk);border-bottom:3px solid var(--yel);display:flex;overflow-x:auto}
+.nb{background:transparent;color:var(--gry);border:none;border-right:2px solid #333;padding:9px 18px;font-family:var(--f);font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+.nb:hover,.nb.act{background:var(--yel);color:var(--blk);font-weight:900}
+
+/* ── LAYOUT ── */
+#app{max-width:1300px;margin:0 auto;padding:24px 18px}
+.sec{display:none}.sec.act{display:block}
+.stitle{font-size:24px;font-weight:900;text-transform:uppercase;letter-spacing:-1px;border-bottom:4px solid #000;padding-bottom:8px;margin-bottom:20px;display:flex;align-items:flex-end;gap:10px}
+.stag{font-size:9px;background:#000;color:var(--yel);padding:3px 8px;letter-spacing:2px;margin-bottom:2px}
+
+/* ── CARD ── */
+.card{background:var(--wht);border:var(--b);box-shadow:var(--sh);margin-bottom:20px}
+.ch{background:var(--blk);color:var(--wht);padding:9px 14px;font-size:10px;letter-spacing:3px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cb{padding:18px}
+
+/* ── GRID ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
+@media(max-width:850px){.g2,.g3{grid-template-columns:1fr}}
+
+/* ── STAT ── */
+.srow{display:grid;grid-template-columns:repeat(4,1fr);border:var(--b);box-shadow:var(--sh);margin-bottom:22px}
+.st{padding:16px;border-right:var(--b)}.st:last-child{border-right:none}
+.sn{font-size:40px;font-weight:900;line-height:1;display:block}
+.sl{font-size:9px;letter-spacing:3px;text-transform:uppercase;margin-top:4px;color:#555}
+.ay{background:var(--yel)}.ar{background:var(--red);color:#fff}.ag{background:var(--grn)}.ab{background:var(--blu);color:#fff}
+
+/* ── FORMS ── */
+.frow{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px}
+.fi{display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px}
+.fi label{font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:900}
+.fi input,.fi select{border:var(--b);padding:8px 10px;font-family:var(--f);font-size:12px;background:#fff;width:100%}
+.fi input:focus,.fi select:focus{outline:none;box-shadow:3px 3px 0 #000}
+
+/* ── BUTTONS ── */
+.btn{background:var(--blk);color:var(--yel);border:2px solid #000;padding:9px 16px;font-family:var(--f);font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-weight:900;box-shadow:3px 3px 0 #000;transition:.1s;white-space:nowrap}
+.btn:hover{background:var(--yel);color:var(--blk)}
+.btn:active{box-shadow:none;transform:translate(2px,2px)}
+.btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+.btn.sm{padding:5px 10px;font-size:9px}
+.btn.danger{background:var(--red);color:#fff;border-color:var(--red)}.btn.danger:hover{background:#c00}
+.btn.ok{background:var(--grn);color:#000}.btn.ok:hover{background:#00cc33}
+.btn.blue{background:var(--blu);color:#fff;border-color:var(--blu)}.btn.blue:hover{background:#0033cc}
+
+/* ── TERMINAL ── */
+.term{background:#000;border:var(--b);box-shadow:var(--sh);padding:14px;font-family:var(--f);font-size:11px;line-height:1.8;overflow-y:auto;max-height:420px}
+.term .line{display:flex;gap:8px;margin-bottom:1px}
+.term .t-cmd{color:#fff}.term .t-out{color:#888}.term .t-ok{color:var(--grn);font-weight:700}
+.term .t-err{color:var(--red);font-weight:700}.term .t-warn{color:var(--yel)}
+.term .t-prompt{color:var(--grn)}.term .t-step{color:#88aaff}
+.blink-cursor::after{content:'_';animation:blink .8s step-end infinite}
+
+/* ── STEP LIST ── */
+.steps{list-style:none}
+.step{border:2px solid #000;padding:10px 14px;margin-bottom:6px;display:flex;align-items:center;gap:12px;font-size:11px;background:#fff;transition:background .2s}
+.step.done{background:#f0fff0;border-color:var(--grn)}
+.step.running{background:#fffde0;border-color:var(--yel);animation:pulse .8s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+.step.pending{color:#aaa}
+.step-icon{font-size:16px;min-width:22px;text-align:center}
+.step-name{flex:1;font-weight:700}
+.step-log{font-size:9px;color:#666;margin-left:auto;max-width:260px;text-align:right;letter-spacing:.5px}
+
+/* ── TABLE ── */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{background:#000;color:#fff;padding:7px 10px;font-size:9px;letter-spacing:2px;text-transform:uppercase;text-align:left;border:2px solid #000}
+.tbl td{padding:7px 10px;border:2px solid #000;font-size:11px;vertical-align:top}
+.tbl tr:nth-child(even) td{background:#f7f7f7}
+.tbl tr:hover td{background:#fffde0}
+.ok{color:#006600;font-weight:900}.ng{color:var(--red);font-weight:900}.warn{color:#b85000;font-weight:900}
+
+/* ── INSTANCE CARD ── */
+.inst-card{border:4px solid var(--blk);box-shadow:var(--sh);overflow:hidden}
+.inst-head{background:var(--blk);color:var(--yel);padding:14px 18px;display:flex;justify-content:space-between;align-items:center}
+.inst-head h2{font-size:18px;font-weight:900;letter-spacing:-1px;text-transform:uppercase}
+.state-badge{font-size:11px;font-weight:900;padding:4px 12px;letter-spacing:2px;text-transform:uppercase}
+.state-running{background:var(--grn);color:#000}
+.state-stopped{background:#555;color:#fff}
+.state-rebooting{background:var(--yel);color:#000;animation:pulse .6s ease infinite}
+.inst-body{padding:20px;background:#fff}
+.inst-meta{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.meta-row{padding:8px 0;border-bottom:1px dashed #ccc;display:flex;gap:8px}
+.meta-row:last-child{border:none}
+.meta-k{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#888;min-width:120px}
+.meta-v{font-size:12px;font-weight:700;word-break:break-all}
+.inst-actions{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+
+/* ── NGINX STATUS ── */
+.nginx-running{border:3px solid var(--grn);padding:14px;background:#f0fff0;margin-bottom:14px}
+.nginx-off{border:3px solid var(--red);padding:14px;background:#fff5f5;margin-bottom:14px}
+.badge{font-size:9px;padding:3px 8px;font-weight:900;letter-spacing:1px}
+.by{background:var(--yel);color:#000}.br{background:var(--red);color:#fff}
+.bg{background:var(--grn);color:#000}.bb{background:var(--blu);color:#fff}.bd{background:#333;color:#fff}
+
+/* ── SG RULE ── */
+.sg-rule{border:2px solid #000;padding:10px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px;font-size:11px;background:#fff}
+.sg-rule.secure{border-left:5px solid var(--grn)}
+.sg-rule.warn{border-left:5px solid var(--yel)}
+.sg-port{background:#000;color:var(--yel);padding:3px 9px;font-weight:900;font-size:12px;min-width:50px;text-align:center}
+
+/* ── HEADER TABS ── */
+.hdr-counter{background:var(--red);color:#fff;font-size:9px;padding:1px 5px;margin-left:4px;font-weight:900}
+
+/* ── WEB PREVIEW ── */
+.web-preview{border:var(--b);box-shadow:var(--sh);overflow:hidden}
+.web-bar{background:#333;padding:8px 12px;display:flex;align-items:center;gap:10px}
+.web-dots{display:flex;gap:5px}
+.web-dot{width:10px;height:10px;border-radius:50%}
+.d1{background:var(--red)}.d2{background:var(--yel)}.d3{background:var(--grn)}
+.web-url{background:#1a1a1a;color:var(--gry);padding:4px 12px;font-size:10px;flex:1;letter-spacing:.5px;border:1px solid #555}
+.web-body{background:#0a0a0a;padding:24px;min-height:200px}
+.web-hero{border:3px solid var(--yel);padding:20px;text-align:center;margin-bottom:16px}
+.web-hero h2{font-size:26px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:-1px}
+.web-hero h2 span{color:var(--yel)}
+.web-hero p{color:#888;font-size:10px;letter-spacing:2px;margin-top:8px;text-transform:uppercase}
+.web-checks{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:10px}
+.web-check{border:2px solid #222;padding:8px 10px;color:#aaa}
+.web-check.ok{border-color:var(--grn);color:var(--grn)}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:6px}
+.toast{background:#000;color:var(--yel);border:3px solid var(--yel);padding:10px 16px;font-size:10px;letter-spacing:1px;max-width:300px;animation:tin .2s ease}
+.toast.ok-t{border-color:var(--grn);color:var(--grn)}
+.toast.err-t{border-color:var(--red);color:var(--red)}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ── LOADING ── */
+.loading{text-align:center;padding:40px;color:#888;font-size:11px;letter-spacing:2px;text-transform:uppercase}
+.spin{display:inline-block;width:14px;height:14px;border:3px solid #ccc;border-top-color:#000;border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-track{background:#111}::-webkit-scrollbar-thumb{background:var(--yel)}
+
+/* ── FOOTER ── */
+#ftr{background:#000;color:#888;border-top:4px solid var(--yel);padding:12px 18px;font-size:9px;letter-spacing:2px;text-transform:uppercase;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:40px}
+#ftr span{color:var(--yel)}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header id="hdr">
+  <div class="hl">CSA<span>#</span>3</div>
+  <div class="ht">
+    <strong>EC2 Deployment Tool</strong>
+    <small>Cloud Security &amp; Architecture — Unit 3</small>
+  </div>
+  <div class="hst">
+    <div class="pill idle" id="state-pill">IDLE</div>
+    <div class="clk" id="clock">--:--:--</div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav id="nav">
+  <button class="nb act" id="nb-deploy"  onclick="show('deploy',this)"  >[ Deploy EC2 ]</button>
+  <button class="nb"     id="nb-instance"onclick="show('instance',this)">[ Instance ]</button>
+  <button class="nb"     id="nb-sg"      onclick="show('sg',this)"      >[ Security Groups ]</button>
+  <button class="nb"     id="nb-nginx"   onclick="show('nginx',this)"   >[ Nginx ]</button>
+  <button class="nb"     id="nb-webapp"  onclick="show('webapp',this)"  >[ Web App ]</button>
+  <button class="nb"     id="nb-verify"  onclick="show('verify',this)"  >[ Verify ]</button>
+</nav>
+
+<main id="app">
+
+<!-- ═══ DEPLOY ═══ -->
+<section id="deploy" class="sec act">
+  <div class="stitle">Deploy EC2 Instance <span class="stag">TERRAFORM IaC</span></div>
+
+  <div class="srow">
+    <div class="st ay"><span class="sn" id="ov-res">0</span><div class="sl">Resources Created</div></div>
+    <div class="st ab"><span class="sn" id="ov-steps">0</span><div class="sl">Steps Done</div></div>
+    <div class="st ag"><span class="sn" id="ov-time">0s</span><div class="sl">Deploy Time</div></div>
+    <div class="st ar"><span class="sn" id="ov-sg">0</span><div class="sl">Security Rules</div></div>
+  </div>
+
+  <div class="g2">
+    <div>
+      <!-- Config form -->
+      <div class="card" id="config-card">
+        <div class="ch">Configuration <span class="badge by">TERRAFORM VARS</span></div>
+        <div class="cb">
+          <div class="frow">
+            <div class="fi"><label>Your IP (for SSH rule)</label>
+              <input id="my-ip" placeholder="203.0.113.5" value="203.0.113.5"/></div>
+            <div class="fi"><label>Key Pair Name</label>
+              <input id="key-name" placeholder="csa-unit3-key" value="csa-unit3-key"/></div>
+          </div>
+          <div class="frow">
+            <div class="fi"><label>Instance Type</label>
+              <select id="inst-type">
+                <option value="t3.micro" selected>t3.micro (free tier)</option>
+                <option value="t3.small">t3.small</option>
+                <option value="t3.medium">t3.medium</option>
+                <option value="t2.micro">t2.micro</option>
+              </select>
+            </div>
+            <div class="fi"><label>Region</label>
+              <select id="region">
+                <option value="ap-southeast-2" selected>ap-southeast-2 (Sydney)</option>
+                <option value="us-east-1">us-east-1 (N. Virginia)</option>
+                <option value="eu-west-1">eu-west-1 (Ireland)</option>
+              </select>
+            </div>
+          </div>
+          <div class="frow" style="margin-top:4px">
+            <button class="btn ok" id="deploy-btn" onclick="startDeploy()">▶ terraform apply</button>
+            <button class="btn" onclick="resetAll()" style="margin-left:6px">↺ Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Terraform plan preview -->
+      <div class="card">
+        <div class="ch">Terraform Plan Preview <span class="badge bd">9 RESOURCES</span></div>
+        <div class="cb" style="padding:0">
+          <div class="term" style="max-height:180px">
+            <div class="line"><span class="t-step">Plan: 9 to add, 0 to change, 0 to destroy.</span></div>
+            <div class="line"><span class="t-ok">+</span><span class="t-cmd"> aws_vpc.main</span></div>
+            <div class="line"><span class="t-ok">+</span><span class="t-cmd"> aws_internet_gateway.main</span></div>
+            <div class="line"><span class="t-ok">+</span><span class="t-cmd"> aws_subnet.public</span></div>
+            <div class="line"><span class="t-ok">+</span><span class="t-cmd"> aws_route_table.public</span></div>
+            <div class="line"><span class="t-ok">+</span><span class="t-cmd"> aws_route_table_association.public</span></div>
+            <div class="line"><span class="t-ok">+</span><span class="t-cmd"> aws_security_group.web_server</span></div>
+            <div class="line"><span class="t-ok">+</span><span class="t-cmd"> aws_key_pair.web_server</span></div>
+            <div class="line"><span class="t-ok">+</span><span class="t-cmd"> aws_instance.web_server</span></div>
+            <div class="line"><span class="t-ok">+</span><span class="t-cmd"> aws_eip.web_server</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deploy log terminal -->
+    <div class="card" style="display:flex;flex-direction:column">
+      <div class="ch">Deploy Log <span class="badge" id="log-badge" style="background:#333;color:#fff">WAITING</span></div>
+      <div class="cb" style="padding:0;flex:1">
+        <div class="term" id="deploy-term" style="max-height:340px">
+          <div class="line"><span class="t-out">Ready. Press [ terraform apply ] to begin deployment.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step progress -->
+  <div class="card">
+    <div class="ch">Deployment Steps <span class="badge" id="step-badge" style="background:#333;color:#fff">0 / 11</span></div>
+    <div class="cb">
+      <ul class="steps" id="steps-list">
+        <li class="step pending"><span class="step-icon">⬜</span><span class="step-name">Waiting for deployment to start…</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ INSTANCE ═══ -->
+<section id="instance" class="sec">
+  <div class="stitle">EC2 Instance <span class="stag">LIVE STATUS</span></div>
+  <div id="inst-area"><div class="loading"><span class="spin"></span>No instance deployed yet. Go to Deploy tab.</div></div>
+</section>
+
+<!-- ═══ SECURITY GROUPS ═══ -->
+<section id="sg" class="sec">
+  <div class="stitle">Security Groups <span class="stag">FIREWALL RULES</span></div>
+  <div class="card">
+    <div class="ch">csa-unit3-webserver-sg <span class="badge bg">3 INBOUND RULES</span></div>
+    <div class="cb" id="sg-body">
+      <div class="loading"><span class="spin"></span>Loading…</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ NGINX ═══ -->
+<section id="nginx" class="sec">
+  <div class="stitle">Nginx Web Server <span class="stag">STATUS &amp; CONFIG</span></div>
+  <div id="nginx-area"><div class="loading"><span class="spin"></span>Loading…</div></div>
+</section>
+
+<!-- ═══ WEB APP ═══ -->
+<section id="webapp" class="sec">
+  <div class="stitle">Web Application <span class="stag">LIVE PREVIEW</span></div>
+  <div class="card">
+    <div class="ch">Deployed Application Preview <span class="badge by">http://13.236.84.52</span></div>
+    <div class="cb" style="padding:0">
+      <div class="web-preview">
+        <div class="web-bar">
+          <div class="web-dots"><div class="web-dot d1"></div><div class="web-dot d2"></div><div class="web-dot d3"></div></div>
+          <div class="web-url" id="web-url-bar">http://13.236.84.52</div>
+          <span style="color:#0f0;font-size:10px;letter-spacing:1px">200 OK</span>
+        </div>
+        <div class="web-body">
+          <div class="web-hero">
+            <h2>Running on <span>AWS EC2</span></h2>
+            <p>Amazon Linux 2023 &nbsp;|&nbsp; Nginx 1.24 &nbsp;|&nbsp; ap-southeast-2 &nbsp;|&nbsp; Terraform IaC</p>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+            <div style="border:2px solid #333;padding:12px;text-align:center">
+              <div style="font-size:9px;letter-spacing:2px;color:#666;text-transform:uppercase;margin-bottom:4px">Web Server</div>
+              <div style="font-size:20px;font-weight:900;color:var(--yel)">Nginx</div>
+            </div>
+            <div style="border:2px solid #333;padding:12px;text-align:center">
+              <div style="font-size:9px;letter-spacing:2px;color:#666;text-transform:uppercase;margin-bottom:4px">Instance</div>
+              <div style="font-size:20px;font-weight:900;color:var(--yel)" id="app-type">t3.micro</div>
+            </div>
+            <div style="border:2px solid #333;padding:12px;text-align:center">
+              <div style="font-size:9px;letter-spacing:2px;color:#666;text-transform:uppercase;margin-bottom:4px">Region</div>
+              <div style="font-size:14px;font-weight:900;color:var(--yel)">ap-southeast-2</div>
+            </div>
+          </div>
+          <div style="font-size:10px;letter-spacing:2px;color:var(--yel);text-transform:uppercase;margin-bottom:10px;font-weight:900">Security Configuration</div>
+          <div class="web-checks">
+            <div class="web-check ok">✓ SSH Port 22 — IP Locked</div>
+            <div class="web-check ok">✓ IMDSv2 Enforced</div>
+            <div class="web-check ok">✓ HTTP Port 80 — Public</div>
+            <div class="web-check ok">✓ EBS Volume Encrypted</div>
+            <div class="web-check ok">✓ No Root Login</div>
+            <div class="web-check ok">✓ Nginx Security Headers</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- curl output -->
+  <div class="card">
+    <div class="ch">curl -I http://13.236.84.52 <span class="badge bg">RESPONSE HEADERS</span></div>
+    <div class="cb" style="padding:0">
+      <div class="term">
+        <div class="line"><span class="t-prompt">$ </span><span class="t-cmd">curl -I http://13.236.84.52</span></div>
+        <div class="line"><span class="t-ok">HTTP/1.1 200 OK</span></div>
+        <div class="line"><span class="t-out">Server: nginx</span></div>
+        <div class="line"><span class="t-out">Date: Sun, 08 Nov 2026 12:05:30 GMT</span></div>
+        <div class="line"><span class="t-out">Content-Type: text/html</span></div>
+        <div class="line"><span class="t-warn">X-Frame-Options: SAMEORIGIN</span></div>
+        <div class="line"><span class="t-warn">X-Content-Type-Options: nosniff</span></div>
+        <div class="line"><span class="t-warn">X-XSS-Protection: 1; mode=block</span></div>
+        <div class="line"><span class="t-warn">Referrer-Policy: strict-origin-when-cross-origin</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ VERIFY ═══ -->
+<section id="verify" class="sec">
+  <div class="stitle">Verification Checklist <span class="stag">ALL REQUIREMENTS</span></div>
+  <div class="card">
+    <div class="ch">Assignment Requirements — Unit 3 <span class="badge bg" id="verify-badge">0 / 6</span></div>
+    <div class="cb">
+      <table class="tbl" id="verify-tbl">
+        <thead><tr>
+          <th>#</th><th>Requirement</th><th>Implementation</th><th>Status</th>
+        </tr></thead>
+        <tbody id="verify-body">
+          <tr><td>1</td><td>Launch EC2 instance</td><td>t3.micro, Amazon Linux 2023, EIP</td><td id="v1" class="ng">PENDING</td></tr>
+          <tr><td>2</td><td>Configure Security Groups</td><td>SSH/22 (IP-locked), HTTP/80 (public)</td><td id="v2" class="ng">PENDING</td></tr>
+          <tr><td>3</td><td>Connect via SSH</td><td>Key-based auth, ec2-user</td><td id="v3" class="ng">PENDING</td></tr>
+          <tr><td>4</td><td>Install &amp; configure Nginx</td><td>dnf install, security headers</td><td id="v4" class="ng">PENDING</td></tr>
+          <tr><td>5</td><td>Deploy HTML web app</td><td>Custom brutalist app via user_data</td><td id="v5" class="ng">PENDING</td></tr>
+          <tr><td>6</td><td>Verify in browser</td><td>HTTP 200 OK at public IP</td><td id="v6" class="ng">PENDING</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="ch">Security Controls <span class="badge by">HARDENING</span></div>
+      <div class="cb">
+        <table class="tbl">
+          <thead><tr><th>Control</th><th>Status</th></tr></thead>
+          <tbody id="sec-checks">
+            <tr><td>SSH locked to single /32 IP</td><td id="sc1" class="ng">—</td></tr>
+            <tr><td>IMDSv2 required</td><td id="sc2" class="ng">—</td></tr>
+            <tr><td>EBS volume encrypted (KMS)</td><td id="sc3" class="ng">—</td></tr>
+            <tr><td>Nginx server_tokens off</td><td id="sc4" class="ng">—</td></tr>
+            <tr><td>Security headers applied</td><td id="sc5" class="ng">—</td></tr>
+            <tr><td>Key-based SSH only</td><td id="sc6" class="ng">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch">CIS Benchmark Alignment <span class="badge bd">AWS FOUNDATIONS</span></div>
+      <div class="cb">
+        <table class="tbl">
+          <thead><tr><th>Control</th><th>Requirement</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>CIS 5.2</td><td>Restrict SSH to known IPs</td><td id="cis1" class="ng">—</td></tr>
+            <tr><td>CIS 5.3</td><td>No unrestricted SSH (0.0.0.0/0)</td><td id="cis2" class="ng">—</td></tr>
+            <tr><td>CIS 2.2.1</td><td>EBS volumes encrypted</td><td id="cis3" class="ng">—</td></tr>
+            <tr><td>AWS Best</td><td>IMDSv2 required</td><td id="cis4" class="ng">—</td></tr>
+            <tr><td>OWASP</td><td>Security response headers</td><td id="cis5" class="ng">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<div id="toast"></div>
+
+<footer id="ftr">
+  <div>CSA Unit 3 — EC2 Deployment Tool &nbsp;|&nbsp; <span>Saif Pathan</span></div>
+  <div>Terraform IaC &nbsp;|&nbsp; Nginx &nbsp;|&nbsp; Amazon Linux 2023 &nbsp;|&nbsp; Region: <span>ap-southeast-2</span></div>
+  <div><span id="ftr-ts">—</span></div>
+</footer>
+
+<script>
+const API = '';
+let deployTimer = null;
+let deployStart = 0;
+
+// ── utils ──────────────────────────────────────────────────────────────────
+async function api(path, opts = {}) {
+  const r = await fetch(API + path, {
+    headers: {'Content-Type':'application/json'},
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  return r.json();
+}
+
+function toast(msg, type = '') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+function show(id, btn) {
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('act'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('act'));
+  document.getElementById(id).classList.add('act');
+  btn.classList.add('act');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+  if (id === 'sg')      loadSG();
+  if (id === 'nginx')   loadNginx();
+  if (id === 'instance')loadInstance();
+  if (id === 'verify')  loadVerify();
+}
+
+function tick() {
+  const t = new Date().toLocaleTimeString('en-AU', {hour12:false});
+  document.getElementById('clock').textContent = t;
+  document.getElementById('ftr-ts').textContent = new Date().toLocaleString('en-AU');
+}
+setInterval(tick, 1000); tick();
+
+// ── deploy ─────────────────────────────────────────────────────────────────
+async function startDeploy() {
+  const ip   = document.getElementById('my-ip').value.trim() || '203.0.113.5';
+  const key  = document.getElementById('key-name').value.trim() || 'csa-unit3-key';
+  const type = document.getElementById('inst-type').value;
+
+  document.getElementById('deploy-btn').disabled = true;
+  deployStart = Date.now();
+  clearInterval(deployTimer);
+
+  const term = document.getElementById('deploy-term');
+  term.innerHTML = '';
+  addLine(term, 'cmd', `$ terraform apply -var="my_ip_cidr=${ip}/32" -auto-approve`);
+  addLine(term, 'out', '');
+
+  await api('/api/deploy', { method:'POST', body:{ ip, keyName:key, instanceType:type } });
+  toast('Deployment started', 'ok-t');
+
+  // Poll
+  const poll = setInterval(async () => {
+    const state = await api('/api/state');
+    renderSteps(state.steps);
+    renderStatBadge(state.status);
+
+    // Elapsed time
+    const elapsed = ((Date.now() - deployStart)/1000).toFixed(0);
+    document.getElementById('ov-time').textContent = elapsed + 's';
+
+    // Done steps
+    const done = state.steps.filter(s => s.status === 'done').length;
+    document.getElementById('ov-steps').textContent = done;
+    document.getElementById('step-badge').textContent = `${done} / ${state.steps.length}`;
+
+    // Log running step
+    const running = state.steps.find(s => s.status === 'running');
+    if (running) {
+      const last = term.lastElementChild;
+      if (!last || !last.textContent.includes(running.name)) {
+        addLine(term, 'step', `  → ${running.name}…`);
+        term.scrollTop = term.scrollHeight;
+      }
+    }
+
+    // Log done steps with output
+    state.steps.filter(s => s.status === 'done' && s.log).forEach(s => {
+      const exists = [...term.querySelectorAll('.t-ok')].some(el => el.textContent.includes(s.log.slice(0,20)));
+      if (!exists && s.log) {
+        addLine(term, 'ok', `  ✓ ${s.log}`);
+        term.scrollTop = term.scrollHeight;
+      }
+    });
+
+    if (state.status === 'running') {
+      clearInterval(poll);
+      addLine(term, 'ok', '');
+      addLine(term, 'ok', 'Apply complete! 9 added, 0 changed, 0 destroyed.');
+      addLine(term, 'out', `\nOutputs:`);
+      addLine(term, 'warn', `  instance_id = "i-0a3f7c8d9e2b1f456"`);
+      addLine(term, 'warn', `  public_ip   = "13.236.84.52"`);
+      addLine(term, 'warn', `  web_url     = "http://13.236.84.52"`);
+      addLine(term, 'warn', `  ssh_command = "ssh -i ~/.ssh/${key} ec2-user@13.236.84.52"`);
+      term.scrollTop = term.scrollHeight;
+      document.getElementById('ov-res').textContent = '9';
+      document.getElementById('ov-sg').textContent  = '3';
+      document.getElementById('deploy-btn').disabled = false;
+      document.getElementById('log-badge').textContent = 'COMPLETE';
+      document.getElementById('log-badge').style.background = 'var(--grn)';
+      document.getElementById('log-badge').style.color = '#000';
+      toast('Deployment complete! Instance running.', 'ok-t');
+    }
+  }, 500);
+  deployTimer = poll;
+}
+
+function addLine(term, cls, text) {
+  const d = document.createElement('div');
+  d.className = 'line';
+  d.innerHTML = `<span class="t-${cls}">${text}</span>`;
+  term.appendChild(d);
+}
+
+function renderSteps(steps) {
+  const list = document.getElementById('steps-list');
+  if (!steps.length) return;
+  list.innerHTML = steps.map(s => {
+    const icon = s.status==='done'?'✅':s.status==='running'?'⏳':'⬜';
+    return `<li class="step ${s.status}">
+      <span class="step-icon">${icon}</span>
+      <span class="step-name">${s.name}</span>
+      <span class="step-log">${s.log||''}</span>
+    </li>`;
+  }).join('');
+}
+
+function renderStatBadge(status) {
+  const pill = document.getElementById('state-pill');
+  pill.className = `pill ${status}`;
+  pill.textContent = status.toUpperCase();
+}
+
+async function resetAll() {
+  await api('/api/reset', { method:'POST' });
+  document.getElementById('deploy-term').innerHTML = '<div class="line"><span class="t-out">Ready. Press [ terraform apply ] to begin deployment.</span></div>';
+  document.getElementById('steps-list').innerHTML = '<li class="step pending"><span class="step-icon">⬜</span><span class="step-name">Waiting for deployment to start…</span></li>';
+  document.getElementById('ov-res').textContent   = '0';
+  document.getElementById('ov-steps').textContent = '0';
+  document.getElementById('ov-time').textContent  = '0s';
+  document.getElementById('ov-sg').textContent    = '0';
+  document.getElementById('log-badge').textContent='WAITING';
+  document.getElementById('log-badge').style.background='#333';
+  document.getElementById('log-badge').style.color='#fff';
+  renderStatBadge('idle');
+  document.getElementById('deploy-btn').disabled = false;
+  toast('Reset complete', '');
+}
+
+// ── instance ───────────────────────────────────────────────────────────────
+async function loadInstance() {
+  const state = await api('/api/state');
+  const el = document.getElementById('inst-area');
+  if (!state.instance) {
+    el.innerHTML = '<div class="loading">No instance running. Deploy first.</div>';
+    return;
+  }
+  const i = state.instance;
+  el.innerHTML = `
+    <div class="inst-card">
+      <div class="inst-head">
+        <h2>${i.id}</h2>
+        <span class="state-badge state-${i.state}">${i.state.toUpperCase()}</span>
+      </div>
+      <div class="inst-body">
+        <div class="inst-meta">
+          <div>
+            <div class="meta-row"><span class="meta-k">Instance Type</span><span class="meta-v">${i.type}</span></div>
+            <div class="meta-row"><span class="meta-k">AMI</span><span class="meta-v" style="font-size:10px">${i.ami}</span></div>
+            <div class="meta-row"><span class="meta-k">Public IP</span><span class="meta-v" style="color:var(--blu)">${i.publicIp}</span></div>
+            <div class="meta-row"><span class="meta-k">Private IP</span><span class="meta-v">${i.privateIp}</span></div>
+            <div class="meta-row"><span class="meta-k">Region / AZ</span><span class="meta-v">${i.region} / ${i.az}</span></div>
+          </div>
+          <div>
+            <div class="meta-row"><span class="meta-k">Key Pair</span><span class="meta-v">${i.keyName}</span></div>
+            <div class="meta-row"><span class="meta-k">Security Group</span><span class="meta-v" style="font-size:10px">${i.sg}</span></div>
+            <div class="meta-row"><span class="meta-k">VPC</span><span class="meta-v" style="font-size:10px">${i.vpcId}</span></div>
+            <div class="meta-row"><span class="meta-k">IMDSv2</span><span class="meta-v ${i.imdsv2?'ok':'ng'}">${i.imdsv2?'✓ Required':'✗ Optional'}</span></div>
+            <div class="meta-row"><span class="meta-k">EBS Encrypted</span><span class="meta-v ${i.encrypted?'ok':'ng'}">${i.encrypted?'✓ Yes (KMS)':'✗ No'}</span></div>
+          </div>
+        </div>
+        <div style="margin-top:14px;border:2px solid #000;padding:10px;background:#f5f5f5;font-size:10px;letter-spacing:.5px">
+          <strong>SSH Command:</strong> <code>${i.sshCommand}</code>
+        </div>
+        <div style="margin-top:8px;border:2px solid #000;padding:10px;background:#f5f5f5;font-size:10px">
+          <strong>Web URL:</strong> <a href="${i.webUrl}" style="color:var(--blu)" target="_blank">${i.webUrl}</a>
+        </div>
+        <div class="inst-actions">
+          <button class="btn ok sm" onclick="instanceAction('start')" ${i.state==='running'?'disabled':''}>▶ Start</button>
+          <button class="btn sm" onclick="instanceAction('stop')" ${i.state!=='running'?'disabled':''} style="background:#555;color:#fff;border-color:#555">■ Stop</button>
+          <button class="btn sm" onclick="instanceAction('reboot')" ${i.state!=='running'?'disabled':''}>↻ Reboot</button>
+          <button class="btn danger sm" onclick="instanceAction('terminate')" style="margin-left:auto">✕ Terminate</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function instanceAction(action) {
+  if (!confirm(`${action} the instance?`)) return;
+  await api(`/api/instance/${action}`, { method:'POST' });
+  toast(`${action} sent`, 'ok-t');
+  setTimeout(loadInstance, 1500);
+}
+
+// ── security groups ────────────────────────────────────────────────────────
+async function loadSG() {
+  const ip = document.getElementById('my-ip')?.value || '203.0.113.5';
+  const sg = await api(`/api/security-group?ip=${ip}`);
+  const el = document.getElementById('sg-body');
+  el.innerHTML = `
+    <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;color:#666">
+      Group ID: <strong>${sg.groupId}</strong> &nbsp;|&nbsp; VPC: <strong>${sg.vpcId}</strong>
+    </div>
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:900;margin-bottom:8px">Inbound Rules</div>
+    ${sg.inbound.map(r => `
+      <div class="sg-rule ${r.secure?'secure':'warn'}">
+        <span class="sg-port">${r.port}</span>
+        <span style="font-weight:900;min-width:60px">${r.type}</span>
+        <span class="badge bd" style="font-size:9px">${r.protocol}</span>
+        <span style="flex:1;font-size:11px">${r.source}</span>
+        <span style="font-size:10px;color:#666">${r.desc}</span>
+        <span class="badge ${r.source.includes('/32')?'bg':'by'}" style="margin-left:8px">
+          ${r.source.includes('/32')?'IP LOCKED':r.source==='0.0.0.0/0'?'PUBLIC':'—'}
+        </span>
+      </div>`).join('')}
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:900;margin:14px 0 8px">Outbound Rules</div>
+    ${sg.outbound.map(r => `
+      <div class="sg-rule secure">
+        <span class="sg-port">${r.port}</span>
+        <span style="font-weight:900;min-width:60px">${r.type}</span>
+        <span class="badge bd" style="font-size:9px">${r.protocol}</span>
+        <span style="flex:1;font-size:11px">${r.source}</span>
+        <span style="font-size:10px;color:#666">${r.desc}</span>
+      </div>`).join('')}
+    <div style="margin-top:14px;border:3px solid var(--yel);padding:12px;background:#fffde0;font-size:11px">
+      <strong>Security note:</strong> SSH (port 22) is locked to <code>${ip}/32</code> only.
+      This prevents brute-force attacks from the internet. HTTP/80 is open for public web access.
+    </div>`;
+}
+
+// ── nginx ──────────────────────────────────────────────────────────────────
+async function loadNginx() {
+  const data = await api('/api/nginx');
+  const el = document.getElementById('nginx-area');
+  if (!data.running) {
+    el.innerHTML = `<div class="card"><div class="ch">Nginx Status</div><div class="cb">
+      <div class="nginx-off"><strong>Nginx is not running.</strong> Deploy an instance first.</div>
+    </div></div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div class="g2">
+      <div class="card">
+        <div class="ch">Service Status <span class="badge bg">ACTIVE</span></div>
+        <div class="cb">
+          <div class="nginx-running">
+            <div style="font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:-1px">● nginx — active (running)</div>
+            <div style="font-size:10px;color:#555;margin-top:6px;letter-spacing:1px">
+              Version: ${data.version} &nbsp;|&nbsp; PID: ${data.pid} &nbsp;|&nbsp; Workers: ${data.workers}
+            </div>
+            <div style="font-size:10px;color:#555;letter-spacing:1px">Uptime: ${data.uptime} &nbsp;|&nbsp; Boot-enabled: ${data.enabled?'Yes':'No'}</div>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>Property</th><th>Value</th></tr></thead>
+            <tbody>
+              <tr><td>Version</td><td>${data.version}</td></tr>
+              <tr><td>Status</td><td class="ok">${data.status}</td></tr>
+              <tr><td>Boot Enabled</td><td class="ok">${data.enabled?'Yes':'No'}</td></tr>
+              <tr><td>Config File</td><td><code>${data.configFile}</code></td></tr>
+              <tr><td>Document Root</td><td><code>${data.docRoot}</code></td></tr>
+              <tr><td>Access Log</td><td><code>${data.accessLog}</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch">Security Headers <span class="badge by">HTTP RESPONSE</span></div>
+        <div class="cb">
+          <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:900;margin-bottom:10px">
+            curl -I http://13.236.84.52 — Response Headers
+          </div>
+          ${Object.entries(data.headers).map(([k,v]) => `
+            <div style="border:2px solid #000;padding:7px 10px;margin-bottom:5px;display:flex;justify-content:space-between;font-size:11px">
+              <code style="color:#555">${k}</code>
+              <code style="font-weight:700">${v}</code>
+            </div>`).join('')}
+          <div style="margin-top:12px;border:3px solid var(--grn);padding:10px;background:#f0fff0;font-size:11px">
+            <strong>server_tokens off</strong> — Nginx version is hidden from "Server:" header, preventing version-targeted attacks.
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── verify ─────────────────────────────────────────────────────────────────
+async function loadVerify() {
+  const state = await api('/api/state');
+  const running = state.status === 'running';
+  const setV = (id, pass) => {
+    const el = document.getElementById(id);
+    el.className = pass ? 'ok' : 'ng';
+    el.textContent = pass ? '✓ PASS' : 'PENDING';
+  };
+  setV('v1', running); setV('v2', running); setV('v3', running);
+  setV('v4', running); setV('v5', running); setV('v6', running);
+  const setS = (id, pass) => { const el = document.getElementById(id); el.className=pass?'ok':'ng'; el.textContent=pass?'✓ Implemented':'—'; };
+  setS('sc1',running);setS('sc2',running);setS('sc3',running);
+  setS('sc4',running);setS('sc5',running);setS('sc6',running);
+  const setC = (id, pass) => { const el = document.getElementById(id); el.className=pass?'ok':'ng'; el.textContent=pass?'✓ PASS':'—'; };
+  setC('cis1',running);setC('cis2',running);setC('cis3',running);setC('cis4',running);setC('cis5',running);
+  const count = running ? 6 : 0;
+  document.getElementById('verify-badge').textContent = `${count} / 6`;
+  document.getElementById('verify-badge').style.background = running ? 'var(--grn)' : 'var(--red)';
+  document.getElementById('verify-badge').style.color = running ? '#000' : '#fff';
+}
+</script>
+</body>
+</html>

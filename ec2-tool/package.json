@@ -1,0 +1,17 @@
+{
+  "name": "csa-unit3-ec2-tool",
+  "version": "1.0.0",
+  "description": "Unit 3 – EC2 Web Application Deployment Tool",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "screenshot": "node capture.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "puppeteer": "^22.0.0"
+  }
+}
