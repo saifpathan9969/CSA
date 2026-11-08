@@ -1,0 +1,663 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CSA // IAM CONTROL CENTER</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--blk:#000;--wht:#fff;--yel:#FFE600;--red:#FF2D00;--grn:#00FF41;--blu:#0047FF;--gry:#CCCCCC;--dgry:#1a1a1a;--b:3px solid #000;--sh:5px 5px 0 #000;--f:'Courier New',monospace}
+html{scroll-behavior:smooth}
+body{background:var(--wht);color:var(--blk);font-family:var(--f);font-size:13px;line-height:1.5}
+#hdr{background:var(--blk);color:var(--yel);border-bottom:5px solid var(--yel);position:sticky;top:0;z-index:200}
+.hi{display:flex;align-items:stretch}
+.hl{background:var(--yel);color:var(--blk);font-size:20px;font-weight:900;padding:12px 20px;border-right:4px solid #000;letter-spacing:-1px;text-transform:uppercase}
+.hl span{color:var(--red)}
+.ht{padding:12px 20px;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gry);display:flex;flex-direction:column;justify-content:center}
+.ht strong{color:var(--yel);font-size:14px;letter-spacing:1px}
+.hs{margin-left:auto;display:flex;align-items:stretch}
+.sp{background:var(--grn);color:var(--blk);font-size:10px;font-weight:900;padding:0 16px;display:flex;align-items:center;gap:5px;border-left:4px solid #000;letter-spacing:2px;text-transform:uppercase}
+.sp::before{content:'●';font-size:8px;animation:blink 1.2s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.sp.err{background:var(--red);color:#fff}
+.clk{background:var(--blk);color:var(--gry);padding:0 16px;display:flex;align-items:center;font-size:11px;border-left:4px solid #333;letter-spacing:2px}
+.idbox{background:#111;color:var(--yel);padding:0 14px;display:flex;align-items:center;font-size:10px;letter-spacing:1px;border-left:4px solid #333;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#nav{background:var(--blk);border-bottom:4px solid var(--yel);display:flex;overflow-x:auto;flex-shrink:0}
+.nb{background:transparent;color:var(--gry);border:none;border-right:2px solid #333;padding:9px 18px;font-family:var(--f);font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:.1s}
+.nb:hover,.nb.act{background:var(--yel);color:var(--blk);font-weight:900}
+.nb .cnt{background:var(--red);color:#fff;font-size:9px;padding:1px 5px;margin-left:5px;font-weight:900}
+.nb.act .cnt{background:var(--blk);color:var(--yel)}
+#app{max-width:1400px;margin:0 auto;padding:24px 18px}
+.sec{display:none}.sec.act{display:block}
+.stitle{font-size:26px;font-weight:900;text-transform:uppercase;letter-spacing:-1px;border-bottom:5px solid #000;padding-bottom:8px;margin-bottom:24px;display:flex;align-items:flex-end;gap:10px}
+.stag{font-size:10px;background:var(--blk);color:var(--yel);padding:3px 9px;letter-spacing:2px;margin-bottom:2px}
+.card{background:var(--wht);border:var(--b);box-shadow:var(--sh);margin-bottom:22px}
+.ch{background:var(--blk);color:var(--wht);padding:9px 14px;font-size:11px;letter-spacing:3px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cb{padding:18px}
+.srow{display:grid;grid-template-columns:repeat(4,1fr);border:var(--b);box-shadow:var(--sh);margin-bottom:24px}
+@media(max-width:800px){.srow{grid-template-columns:repeat(2,1fr)}}
+.st{padding:18px;border-right:var(--b)}.st:last-child{border-right:none}
+.sn{font-size:44px;font-weight:900;line-height:1;display:block}
+.sl{font-size:9px;letter-spacing:3px;text-transform:uppercase;margin-top:4px;color:#555}
+.ay{background:var(--yel)}.ar{background:var(--red);color:#fff}.ag{background:var(--grn)}.ab{background:var(--blu);color:#fff}
+.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:900px){.g2,.g3{grid-template-columns:1fr}}
+.bdg{font-size:9px;padding:2px 7px;letter-spacing:1px;font-weight:900}
+.by{background:var(--yel);color:#000}.br{background:var(--red);color:#fff}
+.bg{background:var(--grn);color:#000}.bb{background:var(--blu);color:#fff}.bd{background:#333;color:#fff}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{background:var(--blk);color:var(--wht);padding:8px 10px;font-size:9px;letter-spacing:2px;text-transform:uppercase;text-align:left;border:2px solid #000}
+.tbl td{padding:8px 10px;border:2px solid #000;font-size:11px;vertical-align:top}
+.tbl tr:nth-child(even) td{background:#f7f7f7}
+.tbl tr:hover td{background:#fffde0}
+.ok{color:#006600;font-weight:900}.ng{color:var(--red);font-weight:900}.warn{color:#b85000;font-weight:900}
+.btn{background:var(--blk);color:var(--yel);border:2px solid #000;padding:7px 14px;font-family:var(--f);font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-weight:900;box-shadow:3px 3px 0 #000;transition:.1s}
+.btn:hover{background:var(--yel);color:var(--blk)}
+.btn:active{box-shadow:none;transform:translate(2px,2px)}
+.btn.sm{padding:4px 9px;font-size:9px}
+.btn.danger{background:var(--red);color:#fff;border-color:var(--red)}.btn.danger:hover{background:#c00;border-color:#c00}
+.btn.success{background:var(--grn);color:#000}.btn.success:hover{background:#00cc33}
+.form-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px}
+.field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:160px}
+.field label{font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:900}
+.field input,.field select{background:var(--wht);border:var(--b);padding:7px 10px;font-family:var(--f);font-size:12px;width:100%}
+.field input:focus,.field select:focus{outline:none;box-shadow:3px 3px 0 #000}
+pre.code{background:var(--blk);color:var(--grn);padding:14px;font-family:var(--f);font-size:10px;line-height:1.7;overflow-x:auto;border:var(--b);box-shadow:var(--sh);margin:12px 0}
+#toast{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--blk);color:var(--yel);border:3px solid var(--yel);padding:12px 18px;font-size:11px;letter-spacing:1px;box-shadow:var(--sh);max-width:320px;animation:tin .2s ease}
+.toast.ok{border-color:var(--grn);color:var(--grn)}.toast.err{border-color:var(--red);color:var(--red)}
+@keyframes tin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.mfa-yes{display:inline-flex;align-items:center;gap:4px;font-weight:900;color:#006600;font-size:11px}
+.mfa-yes::before{content:'🔐'}
+.mfa-no{display:inline-flex;align-items:center;gap:4px;font-weight:900;color:var(--red);font-size:11px}
+.mfa-no::before{content:'⚠'}
+.spin{display:inline-block;width:14px;height:14px;border:3px solid #ccc;border-top-color:#000;border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.loading-row{text-align:center;padding:40px;color:#888;font-size:12px;letter-spacing:2px;text-transform:uppercase}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--wht);border:4px solid #000;box-shadow:8px 8px 0 #000;padding:24px;min-width:380px;max-width:640px;width:90%;max-height:82vh;overflow-y:auto}
+.modal-title{font-size:17px;font-weight:900;text-transform:uppercase;letter-spacing:-1px;border-bottom:3px solid #000;padding-bottom:8px;margin-bottom:16px;display:flex;justify-content:space-between}
+.modal-close{cursor:pointer;font-size:20px;font-weight:900;padding:0 4px}.modal-close:hover{color:var(--red)}
+.ptag{border:2px solid #000;padding:2px 8px;font-size:9px;letter-spacing:1px;text-transform:uppercase;font-weight:700;display:inline-flex;align-items:center;gap:4px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--grn);border:1px solid #000}
+.evt{border-bottom:1px dashed #ccc;padding:7px 0;font-size:11px;display:grid;grid-template-columns:160px 200px 1fr;gap:8px}
+.evt:last-child{border:none}.evt-time{color:#888;font-size:10px}.evt-name{font-weight:900}.evt-src{color:#555;font-size:10px}
+.evt.write .evt-name{color:var(--red)}.evt.read .evt-name{color:#006600}
+::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-track{background:#111}::-webkit-scrollbar-thumb{background:var(--yel)}
+#ftr{background:var(--blk);color:var(--gry);border-top:4px solid var(--yel);padding:14px 20px;font-size:9px;letter-spacing:2px;text-transform:uppercase;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:40px}
+#ftr span{color:var(--yel)}
+</style>
+</head>
+<body>
+
+<header id="hdr">
+  <div class="hi">
+    <div class="hl">CSA<span>#</span>2</div>
+    <div class="ht"><strong>IAM Control Center</strong>Cloud Security &amp; Architecture</div>
+    <div class="hs">
+      <div class="sp" id="conn-pill">CONNECTING</div>
+      <div class="idbox" id="identity-box">—</div>
+      <div class="clk" id="clock">--:--:--</div>
+    </div>
+  </div>
+</header>
+
+<nav id="nav">
+  <button class="nb act" onclick="show('overview',this)">[ Overview ]</button>
+  <button class="nb" onclick="show('groups',this)">[ IAM Groups <span class="cnt" id="cnt-groups">…</span> ]</button>
+  <button class="nb" onclick="show('users',this)">[ Users <span class="cnt" id="cnt-users">…</span> ]</button>
+  <button class="nb" onclick="show('roles',this)">[ Roles <span class="cnt" id="cnt-roles">…</span> ]</button>
+  <button class="nb" onclick="show('s3',this)">[ S3 Buckets <span class="cnt" id="cnt-s3">…</span> ]</button>
+  <button class="nb" onclick="show('ec2',this)">[ EC2 <span class="cnt" id="cnt-ec2">…</span> ]</button>
+  <button class="nb" onclick="show('kms',this)">[ KMS Keys <span class="cnt" id="cnt-kms">…</span> ]</button>
+  <button class="nb" onclick="show('audit',this)">[ Audit Log ]</button>
+  <button class="nb" onclick="show('cred',this)">[ Credential Report ]</button>
+</nav>
+
+<main id="app">
+
+<section id="overview" class="sec act">
+  <div class="stitle">Overview <span class="stag">LIVE DASHBOARD</span></div>
+  <div class="srow">
+    <div class="st ay"><span class="sn" id="ov-groups">…</span><div class="sl">IAM Groups</div></div>
+    <div class="st ab"><span class="sn" id="ov-users">…</span><div class="sl">IAM Users</div></div>
+    <div class="st ag"><span class="sn" id="ov-mfa">…</span><div class="sl">MFA Enabled</div></div>
+    <div class="st ar"><span class="sn" id="ov-nomfa">…</span><div class="sl">MFA Missing</div></div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="ch">AWS Identity <span class="bdg by">STS</span></div><div class="cb" id="identity-card"><div class="loading-row"><span class="spin"></span>Loading…</div></div></div>
+    <div class="card"><div class="ch">Account Summary <span class="bdg bb">IAM</span></div><div class="cb" id="account-summary-card"><div class="loading-row"><span class="spin"></span>Loading…</div></div></div>
+  </div>
+  <div class="card"><div class="ch">Password Policy <span class="bdg bg">CIS 1.5</span></div><div class="cb" id="pw-policy-card"><div class="loading-row"><span class="spin"></span>Loading…</div></div></div>
+</section>
+
+<section id="groups" class="sec">
+  <div class="stitle">IAM Groups <span class="stag">RBAC</span></div>
+  <div class="form-row">
+    <div class="field"><label>New Group Name</label><input id="new-group-name" placeholder="e.g. Developers"/></div>
+    <div class="field"><label>Path</label><input id="new-group-path" value="/csa-unit2/"/></div>
+    <button class="btn" onclick="createGroup()">+ Create Group</button>
+    <button class="btn" onclick="loadGroups()">↻ Refresh</button>
+  </div>
+  <div id="groups-list"><div class="loading-row"><span class="spin"></span>Loading groups…</div></div>
+</section>
+
+<section id="users" class="sec">
+  <div class="stitle">IAM Users <span class="stag">MFA STATUS</span></div>
+  <div class="form-row">
+    <div class="field"><label>Username</label><input id="new-user-name" placeholder="e.g. dev-charlie"/></div>
+    <div class="field"><label>Path</label><input id="new-user-path" value="/csa-unit2/"/></div>
+    <button class="btn" onclick="createUser()">+ Create User</button>
+    <button class="btn" onclick="loadUsers()">↻ Refresh</button>
+  </div>
+  <div id="users-list"><div class="loading-row"><span class="spin"></span>Loading users…</div></div>
+</section>
+
+<section id="roles" class="sec">
+  <div class="stitle">IAM Roles <span class="stag">TRUST POLICIES</span></div>
+  <div style="margin-bottom:20px"><button class="btn" onclick="loadRoles()">↻ Refresh</button></div>
+  <div id="roles-list"><div class="loading-row"><span class="spin"></span>Loading roles…</div></div>
+</section>
+
+<section id="s3" class="sec">
+  <div class="stitle">S3 Buckets <span class="stag">SECURITY POSTURE</span></div>
+  <div style="margin-bottom:20px"><button class="btn" onclick="loadS3()">↻ Refresh</button></div>
+  <div id="s3-list"><div class="loading-row"><span class="spin"></span>Loading buckets…</div></div>
+</section>
+
+<section id="ec2" class="sec">
+  <div class="stitle">EC2 Instances <span class="stag">IAM PROFILES</span></div>
+  <div style="margin-bottom:20px"><button class="btn" onclick="loadEC2()">↻ Refresh</button></div>
+  <div id="ec2-list"><div class="loading-row"><span class="spin"></span>Loading instances…</div></div>
+</section>
+
+<section id="kms" class="sec">
+  <div class="stitle">KMS Keys <span class="stag">ENCRYPTION</span></div>
+  <div style="margin-bottom:20px"><button class="btn" onclick="loadKMS()">↻ Refresh</button></div>
+  <div id="kms-list"><div class="loading-row"><span class="spin"></span>Loading keys…</div></div>
+</section>
+
+<section id="audit" class="sec">
+  <div class="stitle">CloudTrail Audit Log <span class="stag">LIVE EVENTS</span></div>
+  <div class="form-row">
+    <div class="field"><label>Hours back</label>
+      <select id="audit-hours"><option value="1">1 hour</option><option value="6">6 hours</option><option value="24" selected>24 hours</option><option value="72">3 days</option></select>
+    </div>
+    <div class="field"><label>Service filter</label>
+      <select id="audit-svc"><option value="">All services</option><option value="iam">IAM</option><option value="s3">S3</option><option value="ec2">EC2</option><option value="kms">KMS</option><option value="sts">STS</option></select>
+    </div>
+    <button class="btn" onclick="loadAudit()">↻ Fetch Events</button>
+  </div>
+  <div id="trails-list"></div>
+  <div id="audit-events"><div class="loading-row"><span class="spin"></span>Loading…</div></div>
+</section>
+
+<section id="cred" class="sec">
+  <div class="stitle">Credential Report <span class="stag">CIS 1.x</span></div>
+  <div style="margin-bottom:20px"><button class="btn" onclick="loadCredReport()">↻ Generate &amp; Fetch</button></div>
+  <div id="cred-report"><div class="loading-row"><span class="spin"></span>Generating report…</div></div>
+</section>
+
+</main>
+
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-title"><span id="modal-title">Detail</span><span class="modal-close" onclick="closeModal()">✕</span></div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<footer id="ftr">
+  <div>CSA Unit 2 — IAM Control Center &nbsp;|&nbsp; <span>Saif Pathan</span></div>
+  <div>Region: <span id="ftr-region">ap-southeast-2</span> &nbsp;|&nbsp; API: <span>localhost:3000</span></div>
+  <div>CIS AWS Foundations <span>v1.4.0</span> &nbsp;|&nbsp; <span id="ftr-time">—</span></div>
+</footer>
+
+<script>
+const API='';
+async function api(path,opts={}){
+  const r=await fetch(API+path,{headers:{'Content-Type':'application/json'},...opts,body:opts.body?JSON.stringify(opts.body):undefined});
+  const j=await r.json();
+  if(!j.ok)throw new Error(j.error||'API error');
+  return j.data;
+}
+function toast(msg,type='info'){
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;el.textContent=msg;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(()=>el.remove(),4000);
+}
+function show(id,btn){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('act'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('act'));
+  document.getElementById(id).classList.add('act');btn.classList.add('act');
+  window.scrollTo({top:0,behavior:'smooth'});
+  const L={groups:loadGroups,users:loadUsers,roles:loadRoles,s3:loadS3,ec2:loadEC2,kms:loadKMS,audit:loadAudit,cred:loadCredReport};
+  if(L[id])L[id]();
+}
+function openModal(title,bodyHtml){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-body').innerHTML=bodyHtml;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))closeModal();});
+function tick(){
+  const t=new Date().toLocaleTimeString('en-AU',{hour12:false});
+  document.getElementById('clock').textContent=t;
+  document.getElementById('ftr-time').textContent=new Date().toLocaleString('en-AU');
+}
+setInterval(tick,1000);tick();
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+async function init(){
+  const pill=document.getElementById('conn-pill');
+  try{
+    const h=await api('/api/health');
+    document.getElementById('ftr-region').textContent=h.region;
+    pill.textContent='CONNECTED';pill.classList.remove('err');
+    const id=await api('/api/sts/whoami');
+    document.getElementById('identity-box').textContent=id.Arn;
+    document.getElementById('identity-card').innerHTML=`<table class="tbl">
+      <tr><th>Account</th><td>${id.Account}</td></tr>
+      <tr><th>User ID</th><td>${id.UserId}</td></tr>
+      <tr><th>ARN</th><td style="word-break:break-all">${id.Arn}</td></tr>
+    </table>`;
+    loadOverviewStats();loadPasswordPolicy();loadAccountSummary();
+  }catch(e){
+    pill.textContent='OFFLINE';pill.classList.add('err');
+    toast('Cannot reach API: '+e.message,'err');
+  }
+}
+
+async function loadOverviewStats(){
+  try{
+    const [g,u]=await Promise.all([api('/api/iam/groups'),api('/api/iam/users')]);
+    const mfaOn=u.filter(x=>x.MFAEnabled).length;
+    document.getElementById('ov-groups').textContent=g.length;
+    document.getElementById('ov-users').textContent=u.length;
+    document.getElementById('ov-mfa').textContent=mfaOn;
+    document.getElementById('ov-nomfa').textContent=u.length-mfaOn;
+    document.getElementById('cnt-groups').textContent=g.length;
+    document.getElementById('cnt-users').textContent=u.length;
+  }catch(e){console.error(e);}
+}
+
+async function loadPasswordPolicy(){
+  try{
+    const p=await api('/api/iam/password-policy');
+    document.getElementById('pw-policy-card').innerHTML=`<table class="tbl">
+      <tr><th>Min Length</th><td>${p.MinimumPasswordLength} ${p.MinimumPasswordLength>=14?'<span class="ok">✓ CIS 1.5</span>':'<span class="ng">✗ Must be ≥14</span>'}</td></tr>
+      <tr><th>Uppercase</th><td>${p.RequireUppercaseCharacters?'<span class="ok">✓</span>':'<span class="ng">✗</span>'}</td></tr>
+      <tr><th>Lowercase</th><td>${p.RequireLowercaseCharacters?'<span class="ok">✓</span>':'<span class="ng">✗</span>'}</td></tr>
+      <tr><th>Numbers</th><td>${p.RequireNumbers?'<span class="ok">✓</span>':'<span class="ng">✗</span>'}</td></tr>
+      <tr><th>Symbols</th><td>${p.RequireSymbols?'<span class="ok">✓</span>':'<span class="ng">✗</span>'}</td></tr>
+      <tr><th>Max Age (days)</th><td>${p.MaxPasswordAge||'None'}</td></tr>
+      <tr><th>Reuse Prevention</th><td>${p.PasswordReusePrevention||0} ${p.PasswordReusePrevention>=12?'<span class="ok">✓ CIS</span>':'<span class="warn">⚠ Recommend ≥12</span>'}</td></tr>
+    </table>`;
+  }catch(e){document.getElementById('pw-policy-card').innerHTML='<p class="ng">No password policy set. CIS 1.5 requires one.</p>';}
+}
+
+async function loadAccountSummary(){
+  try{
+    const s=await api('/api/iam/account-summary');
+    document.getElementById('account-summary-card').innerHTML=`<table class="tbl">
+      <tr><th>Users</th><td>${s.Users} / ${s.UsersQuota}</td></tr>
+      <tr><th>Groups</th><td>${s.Groups} / ${s.GroupsQuota}</td></tr>
+      <tr><th>Roles</th><td>${s.Roles} / ${s.RolesQuota}</td></tr>
+      <tr><th>Local Policies</th><td>${s.LocalManagedPolicies}</td></tr>
+      <tr><th>MFA Devices</th><td>${s.MFADevices} (${s.MFADevicesInUse} in use)</td></tr>
+      <tr><th>Root Access Keys</th><td>${s.AccountAccessKeysPresent?'<span class="ng">✗ Active — Remove!</span>':'<span class="ok">✓ None</span>'}</td></tr>
+    </table>`;
+  }catch(e){console.error(e);}
+}
+
+async function loadGroups(){
+  const el=document.getElementById('groups-list');
+  el.innerHTML='<div class="loading-row"><span class="spin"></span>Loading…</div>';
+  try{
+    const groups=await api('/api/iam/groups');
+    document.getElementById('cnt-groups').textContent=groups.length;
+    if(!groups.length){el.innerHTML='<div class="loading-row">No groups found.</div>';return;}
+    const cmap={Admins:'ay',Developers:'ab',Auditors:'ag'};
+    el.innerHTML=groups.map(g=>`
+      <div class="card" style="margin-bottom:16px">
+        <div class="ch"><span>${g.GroupName}</span>
+          <span style="display:flex;gap:6px">
+            <span class="bdg ${cmap[g.GroupName]||'bd'}">${g.Users.length} users</span>
+            <span class="bdg bd">${g.AttachedPolicies.length} policies</span>
+            <button class="btn sm danger" onclick="deleteGroup('${g.GroupName}')">✕</button>
+          </span>
+        </div>
+        <div class="cb">
+          <div class="g2">
+            <div>
+              <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;font-weight:900">Attached Policies</div>
+              ${g.AttachedPolicies.map(p=>`
+                <div style="border:2px solid #000;padding:6px 10px;margin-bottom:5px;font-size:11px;display:flex;align-items:center;justify-content:space-between">
+                  <span>▶ ${p.PolicyName}</span>
+                  <span style="display:flex;gap:4px">
+                    <button class="btn sm" onclick="viewPolicy('${encodeURIComponent(p.PolicyArn)}','${p.PolicyName}')">View</button>
+                    <button class="btn sm danger" onclick="detachPolicy('${g.GroupName}','${p.PolicyArn}')">Detach</button>
+                  </span>
+                </div>`).join('')}
+              <div style="margin-top:8px;display:flex;gap:6px">
+                <input id="pol-arn-${g.GroupName}" placeholder="Policy ARN to attach" style="border:var(--b);padding:5px 8px;font-family:var(--f);font-size:10px;flex:1"/>
+                <button class="btn sm" onclick="attachPolicy('${g.GroupName}')">+ Attach</button>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;font-weight:900">Members</div>
+              ${g.Users.map(u=>`
+                <div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px dashed #ccc">
+                  <span class="ptag"><span class="dot"></span>${u.UserName}</span>
+                  <button class="btn sm danger" style="margin-left:auto" onclick="removeFromGroup('${u.UserName}','${g.GroupName}')">✕</button>
+                </div>`).join('')||'<span style="color:#888;font-size:11px">No members</span>'}
+              <div style="margin-top:8px;display:flex;gap:6px">
+                <input id="add-user-${g.GroupName}" placeholder="Username to add" style="border:var(--b);padding:5px 8px;font-family:var(--f);font-size:10px;flex:1"/>
+                <button class="btn sm" onclick="addUserToGroup('${g.GroupName}')">+ Add</button>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:9px;color:#888;margin-top:10px">ARN: ${g.Arn} | Created: ${new Date(g.CreateDate).toLocaleDateString()}</div>
+        </div>
+      </div>`).join('');
+  }catch(e){el.innerHTML=`<div class="loading-row ng">Error: ${e.message}</div>`;toast('Groups: '+e.message,'err');}
+}
+
+async function createGroup(){
+  const name=document.getElementById('new-group-name').value.trim();
+  const path=document.getElementById('new-group-path').value.trim();
+  if(!name){toast('Enter a group name','err');return;}
+  try{await api('/api/iam/groups',{method:'POST',body:{GroupName:name,Path:path}});toast(`Group "${name}" created`,'ok');document.getElementById('new-group-name').value='';loadGroups();loadOverviewStats();}
+  catch(e){toast('Error: '+e.message,'err');}
+}
+async function deleteGroup(name){
+  if(!confirm(`Delete group "${name}"?`))return;
+  try{await api(`/api/iam/groups/${name}`,{method:'DELETE'});toast(`Deleted "${name}"`,'ok');loadGroups();loadOverviewStats();}
+  catch(e){toast('Error: '+e.message,'err');}
+}
+async function attachPolicy(gn){
+  const arn=document.getElementById(`pol-arn-${gn}`).value.trim();
+  if(!arn){toast('Enter a policy ARN','err');return;}
+  try{await api(`/api/iam/groups/${gn}/attach-policy`,{method:'POST',body:{PolicyArn:arn}});toast('Policy attached','ok');loadGroups();}
+  catch(e){toast('Error: '+e.message,'err');}
+}
+async function detachPolicy(gn,arn){
+  if(!confirm('Detach this policy?'))return;
+  try{await api(`/api/iam/groups/${gn}/detach-policy`,{method:'POST',body:{PolicyArn:arn}});toast('Detached','ok');loadGroups();}
+  catch(e){toast('Error: '+e.message,'err');}
+}
+async function addUserToGroup(gn){
+  const user=document.getElementById(`add-user-${gn}`).value.trim();
+  if(!user){toast('Enter username','err');return;}
+  try{await api(`/api/iam/users/${user}/add-to-group`,{method:'POST',body:{GroupName:gn}});toast(`${user} added`,'ok');loadGroups();loadUsers();}
+  catch(e){toast('Error: '+e.message,'err');}
+}
+async function removeFromGroup(user,group){
+  try{await api(`/api/iam/users/${user}/remove-from-group`,{method:'POST',body:{GroupName:group}});toast(`${user} removed`,'ok');loadGroups();loadUsers();}
+  catch(e){toast('Error: '+e.message,'err');}
+}
+async function viewPolicy(ea,name){
+  try{
+    const p=await api(`/api/iam/policies/${ea}`);
+    openModal(`Policy: ${name}`,`<table class="tbl" style="margin-bottom:14px">
+      <tr><th>Name</th><td>${p.PolicyName}</td></tr>
+      <tr><th>ARN</th><td style="word-break:break-all;font-size:10px">${p.Arn}</td></tr>
+      <tr><th>Attachments</th><td>${p.AttachmentCount}</td></tr>
+      <tr><th>Description</th><td>${p.Description||'—'}</td></tr>
+    </table>
+    <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:900;margin-bottom:6px">Document</div>
+    <pre class="code">${escHtml(JSON.stringify(p.Document,null,2))}</pre>`);
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+async function loadUsers(){
+  const el=document.getElementById('users-list');
+  el.innerHTML='<div class="loading-row"><span class="spin"></span>Loading…</div>';
+  try{
+    const users=await api('/api/iam/users');
+    document.getElementById('cnt-users').textContent=users.length;
+    if(!users.length){el.innerHTML='<div class="loading-row">No users found.</div>';return;}
+    el.innerHTML=`<table class="tbl"><thead><tr><th>Username</th><th>Path</th><th>Groups</th><th>MFA</th><th>Created</th><th>Actions</th></tr></thead><tbody>
+      ${users.map(u=>`<tr>
+        <td><strong>${u.UserName}</strong></td>
+        <td style="font-size:10px;color:#666">${u.Path}</td>
+        <td>${u.Groups.map(g=>`<span class="ptag"><span class="dot"></span>${g.GroupName}</span>`).join('')||'—'}</td>
+        <td>${u.MFAEnabled?'<span class="mfa-yes">MFA Active</span>':'<span class="mfa-no">No MFA</span>'}</td>
+        <td style="font-size:10px">${new Date(u.CreateDate).toLocaleDateString()}</td>
+        <td><div style="display:flex;gap:4px">
+          <button class="btn sm" onclick="showUserDetail('${u.UserName}')">Detail</button>
+          <button class="btn sm danger" onclick="deleteUser('${u.UserName}')">Delete</button>
+        </div></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+  }catch(e){el.innerHTML=`<div class="loading-row ng">Error: ${e.message}</div>`;toast('Users: '+e.message,'err');}
+}
+
+async function createUser(){
+  const name=document.getElementById('new-user-name').value.trim();
+  const path=document.getElementById('new-user-path').value.trim();
+  if(!name){toast('Enter username','err');return;}
+  try{await api('/api/iam/users',{method:'POST',body:{UserName:name,Path:path}});toast(`User "${name}" created`,'ok');document.getElementById('new-user-name').value='';loadUsers();loadOverviewStats();}
+  catch(e){toast('Error: '+e.message,'err');}
+}
+async function deleteUser(name){
+  if(!confirm(`Delete user "${name}"?`))return;
+  try{await api(`/api/iam/users/${name}`,{method:'DELETE'});toast(`Deleted`,'ok');loadUsers();loadOverviewStats();}
+  catch(e){toast('Error: '+e.message,'err');}
+}
+async function showUserDetail(name){
+  try{
+    const m=await api(`/api/iam/users/${name}/mfa`);
+    openModal(`User: ${name}`,`<table class="tbl" style="margin-bottom:14px">
+      <tr><th>Username</th><td>${name}</td></tr>
+      <tr><th>MFA Status</th><td>${m.MFAEnabled?'<span class="mfa-yes">Active</span>':'<span class="mfa-no">Not Enrolled</span>'}</td></tr>
+      <tr><th>Devices</th><td>${m.MFADevices.length}</td></tr>
+    </table>
+    ${m.MFADevices.map(d=>`<div style="border:2px solid #000;padding:8px 12px;margin-bottom:6px;font-size:11px"><strong>${d.SerialNumber}</strong><br/>Enabled: ${new Date(d.EnableDate).toLocaleDateString()}</div>`).join('')||'<p style="color:#888;font-size:11px">No MFA devices enrolled.</p>'}`);
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+async function loadRoles(){
+  const el=document.getElementById('roles-list');
+  el.innerHTML='<div class="loading-row"><span class="spin"></span>Loading…</div>';
+  try{
+    const roles=await api('/api/iam/roles');
+    document.getElementById('cnt-roles').textContent=roles.length;
+    if(!roles.length){el.innerHTML='<div class="loading-row">No roles found.</div>';return;}
+    el.innerHTML=`<table class="tbl"><thead><tr><th>Role Name</th><th>Path</th><th>Max Session</th><th>Created</th><th>Actions</th></tr></thead><tbody>
+      ${roles.map(r=>`<tr>
+        <td><strong>${r.RoleName}</strong></td>
+        <td style="font-size:10px;color:#666">${r.Path}</td>
+        <td>${r.MaxSessionDuration?(r.MaxSessionDuration/3600).toFixed(1)+'h':'—'}</td>
+        <td style="font-size:10px">${new Date(r.CreateDate).toLocaleDateString()}</td>
+        <td><button class="btn sm" onclick="showRoleDetail('${r.RoleName}')">Detail</button></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+  }catch(e){el.innerHTML=`<div class="loading-row ng">Error: ${e.message}</div>`;}
+}
+
+async function showRoleDetail(name){
+  try{
+    const r=await api(`/api/iam/roles/${name}`);
+    const trust=JSON.parse(decodeURIComponent(r.AssumeRolePolicyDocument));
+    openModal(`Role: ${name}`,`<table class="tbl" style="margin-bottom:14px">
+      <tr><th>ARN</th><td style="word-break:break-all;font-size:10px">${r.Arn}</td></tr>
+      <tr><th>Max Session</th><td>${r.MaxSessionDuration?(r.MaxSessionDuration/3600).toFixed(1)+'h':'—'}</td></tr>
+      <tr><th>Description</th><td>${r.Description||'—'}</td></tr>
+    </table>
+    <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:900;margin-bottom:6px">Trust Policy</div>
+    <pre class="code">${escHtml(JSON.stringify(trust,null,2))}</pre>
+    <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:900;margin:12px 0 6px">Attached Policies (${r.AttachedPolicies.length})</div>
+    ${r.AttachedPolicies.map(p=>`<div style="border:2px solid #000;padding:7px 10px;margin-bottom:5px;font-size:11px;display:flex;justify-content:space-between"><span>▶ ${p.PolicyName}</span><button class="btn sm" onclick="viewPolicy('${encodeURIComponent(p.PolicyArn)}','${p.PolicyName}')">View</button></div>`).join('')||'<p style="color:#888;font-size:11px">None.</p>'}`);
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+async function loadS3(){
+  const el=document.getElementById('s3-list');
+  el.innerHTML='<div class="loading-row"><span class="spin"></span>Loading…</div>';
+  try{
+    const buckets=await api('/api/s3/buckets');
+    document.getElementById('cnt-s3').textContent=buckets.length;
+    if(!buckets.length){el.innerHTML='<div class="loading-row">No buckets found.</div>';return;}
+    el.innerHTML=buckets.map(b=>{
+      const score=b.postureScore||0,pct=Math.round((score/b.postureMax)*100);
+      const pab=b.publicAccessBlock;
+      const allBlocked=pab&&pab.BlockPublicAcls&&pab.BlockPublicPolicy&&pab.IgnorePublicAcls&&pab.RestrictPublicBuckets;
+      const col=pct===100?'var(--grn)':pct>=50?'var(--yel)':'var(--red)';
+      return `<div class="card" style="margin-bottom:14px">
+        <div class="ch">${b.Name}<span style="display:flex;gap:6px;align-items:center">
+          <span class="bdg ${pct===100?'bg':pct>=50?'by':'br'}">${pct}% secure</span>
+          <span class="bdg bd">${b.region||'—'}</span>
+          <button class="btn sm" onclick="loadBucketObjects('${b.Name}')">Browse</button>
+        </span></div>
+        <div class="cb">
+          <div style="display:flex;height:10px;border:2px solid #000;overflow:hidden;margin-bottom:14px;box-shadow:2px 2px 0 #000">
+            <div style="width:${pct}%;background:${col}"></div><div style="flex:1;background:#eee"></div>
+          </div>
+          <div class="g2" style="font-size:11px">
+            <div>
+              <div style="margin-bottom:6px">${b.encryption?'<span class="ok">✓ SSE-KMS Encryption</span>':'<span class="ng">✗ No Encryption</span>'}</div>
+              <div>${allBlocked?'<span class="ok">✓ Public Access Blocked</span>':'<span class="ng">✗ Public Access Risk</span>'}</div>
+            </div>
+            <div>
+              <div style="margin-bottom:6px">${b.versioning==='Enabled'?'<span class="ok">✓ Versioning</span>':'<span class="warn">⚠ Versioning Off</span>'}</div>
+              <div>${b.logging?'<span class="ok">✓ Access Logging</span>':'<span class="warn">⚠ No Logging</span>'}</div>
+            </div>
+          </div>
+          <div style="font-size:9px;color:#888;margin-top:8px">Created: ${new Date(b.CreationDate).toLocaleDateString()}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){el.innerHTML=`<div class="loading-row ng">Error: ${e.message}</div>`;}
+}
+
+async function loadBucketObjects(name){
+  try{
+    const data=await api(`/api/s3/buckets/${name}/objects`);
+    openModal(`S3: ${name}`,data.objects.length===0
+      ?'<p style="color:#888;font-size:12px">Bucket is empty.</p>'
+      :`<table class="tbl"><thead><tr><th>Key</th><th>Size</th><th>Modified</th></tr></thead><tbody>
+        ${data.objects.map(o=>`<tr><td style="word-break:break-all;font-size:11px">${o.Key}</td><td>${(o.Size/1024).toFixed(1)} KB</td><td style="font-size:10px">${new Date(o.LastModified).toLocaleDateString()}</td></tr>`).join('')}
+      </tbody></table>${data.truncated?'<p style="font-size:10px;color:#888;margin-top:8px">First 100 objects.</p>':''}`);
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+async function loadEC2(){
+  const el=document.getElementById('ec2-list');
+  el.innerHTML='<div class="loading-row"><span class="spin"></span>Loading…</div>';
+  try{
+    const instances=await api('/api/ec2/instances');
+    document.getElementById('cnt-ec2').textContent=instances.length;
+    if(!instances.length){el.innerHTML='<div class="loading-row">No instances in this region.</div>';return;}
+    const sc={running:'ok',stopped:'ng',pending:'warn',stopping:'warn',terminated:'ng'};
+    el.innerHTML=`<table class="tbl"><thead><tr><th>Name / ID</th><th>Type</th><th>State</th><th>IP</th><th>IAM Profile</th><th>IMDSv2</th><th>Actions</th></tr></thead><tbody>
+      ${instances.map(i=>{
+        const state=i.State?.Name||'unknown';
+        const imdsv2=i.MetadataOptions?.HttpTokens==='required';
+        return `<tr>
+          <td><strong>${i.Name}</strong><br/><span style="font-size:9px;color:#888">${i.InstanceId}</span></td>
+          <td>${i.InstanceType}</td>
+          <td><span class="${sc[state]||''}">${state.toUpperCase()}</span></td>
+          <td style="font-size:10px">${i.PublicIpAddress||i.PrivateIpAddress||'—'}</td>
+          <td style="font-size:10px">${i.IamInstanceProfile?'<span class="ok">✓</span> '+i.IamInstanceProfile.Arn.split('/').pop():'<span class="ng">✗ None</span>'}</td>
+          <td>${imdsv2?'<span class="ok">✓ v2</span>':'<span class="ng">✗ v1 risk</span>'}</td>
+          <td><div style="display:flex;gap:4px">
+            ${state==='stopped'?`<button class="btn sm success" onclick="ec2Action('${i.InstanceId}','start')">▶</button>`:''}
+            ${state==='running'?`<button class="btn sm danger" onclick="ec2Action('${i.InstanceId}','stop')">■</button>`:''}
+            ${state==='running'?`<button class="btn sm" onclick="ec2Action('${i.InstanceId}','reboot')">↻</button>`:''}
+          </div></td>
+        </tr>`;
+      }).join('')}
+    </tbody></table>`;
+  }catch(e){el.innerHTML=`<div class="loading-row ng">Error: ${e.message}</div>`;}
+}
+
+async function ec2Action(id,action){
+  try{await api(`/api/ec2/instances/${id}/${action}`,{method:'POST'});toast(`${action} sent`,'ok');setTimeout(loadEC2,2000);}
+  catch(e){toast('Error: '+e.message,'err');}
+}
+
+async function loadKMS(){
+  const el=document.getElementById('kms-list');
+  el.innerHTML='<div class="loading-row"><span class="spin"></span>Loading…</div>';
+  try{
+    const keys=await api('/api/kms/keys');
+    document.getElementById('cnt-kms').textContent=keys.length;
+    if(!keys.length){el.innerHTML='<div class="loading-row">No KMS keys found.</div>';return;}
+    el.innerHTML=`<table class="tbl"><thead><tr><th>Alias / ID</th><th>State</th><th>Spec</th><th>Origin</th><th>Auto Rotate</th><th>Manager</th><th>Actions</th></tr></thead><tbody>
+      ${keys.map(k=>`<tr>
+        <td><strong>${k.Alias||'(no alias)'}</strong><br/><span style="font-size:9px;color:#888">${k.KeyId}</span></td>
+        <td><span class="${k.KeyState==='Enabled'?'ok':'ng'}">${k.KeyState||'—'}</span></td>
+        <td>${k.CustomerMasterKeySpec||k.KeySpec||'—'}</td>
+        <td>${k.Origin||'—'}</td>
+        <td>${k.RotationEnabled===true?'<span class="ok">✓</span>':k.RotationEnabled===false?'<span class="warn">⚠ Off</span>':'—'}</td>
+        <td>${k.KeyManager||'—'}</td>
+        <td><div style="display:flex;gap:4px">
+          <button class="btn sm" onclick="viewKMSPolicy('${k.KeyId}')">Policy</button>
+          ${k.RotationEnabled===false&&k.KeyManager==='CUSTOMER'?`<button class="btn sm success" onclick="enableKMSRotation('${k.KeyId}')">Enable Rotate</button>`:''}
+        </div></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+  }catch(e){el.innerHTML=`<div class="loading-row ng">Error: ${e.message}</div>`;}
+}
+
+async function viewKMSPolicy(id){
+  try{const p=await api(`/api/kms/keys/${id}/policy`);openModal(`KMS Key Policy`,`<pre class="code">${escHtml(JSON.stringify(p,null,2))}</pre>`);}
+  catch(e){toast('Error: '+e.message,'err');}
+}
+async function enableKMSRotation(id){
+  try{await api(`/api/kms/keys/${id}/enable-rotation`,{method:'POST'});toast('Rotation enabled','ok');loadKMS();}
+  catch(e){toast('Error: '+e.message,'err');}
+}
+
+async function loadAudit(){
+  const el=document.getElementById('audit-events');
+  el.innerHTML='<div class="loading-row"><span class="spin"></span>Loading…</div>';
+  try{
+    const hours=document.getElementById('audit-hours').value;
+    const svc=document.getElementById('audit-svc').value;
+    const [events,trails]=await Promise.all([
+      api(`/api/audit/events?hours=${hours}${svc?'&service='+svc:''}`),
+      api('/api/audit/trails').catch(()=>[]),
+    ]);
+    document.getElementById('trails-list').innerHTML=trails.length?`<div class="card" style="margin-bottom:16px"><div class="ch">CloudTrail Trails <span class="bdg bg">${trails.length}</span></div><div class="cb"><table class="tbl"><thead><tr><th>Name</th><th>S3 Bucket</th><th>Multi-Region</th><th>Logging</th></tr></thead><tbody>${trails.map(t=>`<tr><td>${t.Name}</td><td style="font-size:10px">${t.S3BucketName||'—'}</td><td>${t.IsMultiRegionTrail?'<span class="ok">✓</span>':'Single'}</td><td>${t.Status?.IsLogging?'<span class="ok">✓</span>':'<span class="ng">✗</span>'}</td></tr>`).join('')}</tbody></table></div></div>`:'';
+    if(!events.length){el.innerHTML='<div class="loading-row">No events found.</div>';return;}
+    el.innerHTML=`<div class="card"><div class="ch">Events — last ${hours}h <span class="bdg by">${events.length}</span></div><div class="cb" style="padding:12px">
+      ${events.map(e=>`<div class="evt ${e.ReadOnly?'read':'write'}">
+        <span class="evt-time">${new Date(e.EventTime).toLocaleString('en-AU',{hour12:false,month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit'})}</span>
+        <span class="evt-name">${e.EventName}</span>
+        <span class="evt-src">${e.EventSource} | ${e.Username||'—'}</span>
+      </div>`).join('')}
+    </div></div>`;
+  }catch(e){el.innerHTML=`<div class="loading-row ng">Error: ${e.message}</div>`;}
+}
+
+async function loadCredReport(){
+  const el=document.getElementById('cred-report');
+  el.innerHTML='<div class="loading-row"><span class="spin"></span>Generating… (~5s)</div>';
+  try{
+    const rows=await api('/api/iam/credential-report');
+    el.innerHTML=`<div class="card"><div class="ch">Credential Report — ${rows.length} users <span class="bdg by">CIS 1.x</span></div><div class="cb" style="padding:0;overflow-x:auto"><table class="tbl"><thead><tr><th>User</th><th>MFA</th><th>Pw Last Used</th><th>Key1</th><th>Key1 Last</th><th>Key2</th><th>Key2 Last</th></tr></thead><tbody>
+      ${rows.map(r=>`<tr>
+        <td><strong>${r.user}</strong></td>
+        <td>${r.mfa_active==='true'?'<span class="ok">✓</span>':'<span class="ng">✗</span>'}</td>
+        <td style="font-size:10px">${r.password_last_used==='N/A'||r.password_last_used==='no_information'?'—':r.password_last_used}</td>
+        <td>${r.access_key_1_active==='true'?'<span class="warn">Active</span>':'Inactive'}</td>
+        <td style="font-size:10px">${r.access_key_1_last_used_date==='N/A'?'—':r.access_key_1_last_used_date}</td>
+        <td>${r.access_key_2_active==='true'?'<span class="warn">Active</span>':'Inactive'}</td>
+        <td style="font-size:10px">${r.access_key_2_last_used_date==='N/A'?'—':r.access_key_2_last_used_date}</td>
+      </tr>`).join('')}
+    </tbody></table></div></div>`;
+  }catch(e){el.innerHTML=`<div class="loading-row ng">Error: ${e.message}</div>`;toast('Credential report: '+e.message,'err');}
+}
+
+init();
+</script>
+</body>
+</html>
